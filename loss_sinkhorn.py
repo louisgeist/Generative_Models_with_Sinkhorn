@@ -6,43 +6,38 @@ import torch.nn.modules.loss
 
 class sinkhorn_loss(torch.nn.modules.loss._Loss):
 
-    def __init__(self, fixed_cost : bool , f = None): # size_average = None, reduce = None, reduction : str = 'mean'
+    def __init__(self, learnable_cost : bool, epsilon : float, f = None): # size_average = None, reduce = None, reduction : str = 'mean'
         super().__init__(size_average = None, reduce = None, reduction = None)
 
-        self.fixed_cost = fixed_cost
+        self.learnable_cost = learnable_cost
+        self.epsilon = epsilon
         self.L = 10
 
-        if not self.fixed_cost : 
+
+        if self.learnable_cost : 
             self.f = f
 
 
-    def forward(self, input : torch.Tensor, target :  torch.Tensor, epsilon : float):
+    def forward(self, input : torch.Tensor, target :  torch.Tensor):
         # input and target batch sizes are supposed the same
+        if (input.shape != target.shape):
+            print("Error : x shape ", input.shape," should be the same as y shape ", target.shape)
 
 
         batch_size = input.shape[0]
         c = torch.zeros((batch_size,batch_size))
 
-        
-            # X = input
-            # Y = target
-
-            # X_expanded = X.unsqueeze(1)
-            # Y_expanded = Y.unsqueeze(0) 
-
-            # mse_tensor = F.mse_loss(X_expanded, Y_expanded, reduction='none')
-
 
         for i in range(batch_size):
             for j in range(batch_size):
 
-                if self.fixed_cost :
+                if not self.learnable_cost :
                     c[i,j] = F.mse_loss(input[i], target[j], reduction = 'sum')
                 else :
                     c[i,j] = F.mse_loss(self.f(input[i]), self.f(target[j]), reduction = 'sum')
 
-        
-        K = torch.exp(- c/epsilon)
+        print(c.shape)
+        K = torch.exp(- c/self.epsilon)
 
         one_vector = torch.ones(batch_size)
         b = torch.ones(batch_size)

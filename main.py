@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from sinkhorn_gen_model import Model
-
+from gen_model_with_sinkhorn import Model
+from loss_sinkhorn import sinkhorn_loss
 
 
 import torch
@@ -16,11 +16,8 @@ batch_size = 64
 epochs = 5
 generator_dim = [[2,32], [32,128], [128, 784]] #last one should be [_,784]
 learned_cost_dim = [[784, 128], [128, 128]] #first one should be [784, _]
-criterion = nn.CrossEntropyLoss()
+criterion = sinkhorn_loss(False, epsilon = 1)
 lr = 0.001
-"""
-ducoup la tu dois supprimer criterion je pense (dans Model() aussi)
-"""
 model = Model(generator_dim, learned_cost_dim, batch_size, criterion, lr)
 
 #to use normalized version of MNIST

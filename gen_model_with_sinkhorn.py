@@ -24,21 +24,23 @@ class FC_net(nn.Module):
         return x
     
 """
-attention le param is_learned_cost est mit a False par defaut
+attention le param learnable_cost est mis à False par defaut
 """
 class Model(nn.Module):
-    def __init__(self, generator_dim, learned_cost_dim, batch_size, criterion, lr, is_learned_cost = False):
+    def __init__(self, generator_dim, learned_cost_dim, batch_size, criterion, lr, learnable_cost = False):
         super(Model, self).__init__()
         self.generator = FC_net(generator_dim)
-        self.is_learned_cost = is_learned_cost
-        if self.is_learned_cost:
+        self.learnable_cost = learnable_cost
+        if self.learnable_cost:
             self.learned_cost = FC_net(learned_cost_dim)
         self.sample_dim = generator_dim[0][0]
         self.batch_size = batch_size
         self.criterion = criterion
 
-        self.optimizer = optim.RMSprop(self.parameters(), lr)
-        self.sinkhorn_loss_optimizer = optim.RMSprop(self.criterion.parameters(), lr)
+        self.optimizer = optim.Adam(self.parameters(), lr)
+
+        if learnable_cost:
+            self.sinkhorn_loss_optimizer = optim.Adam(self.criterion.parameters(), lr)
 
 
     def forward(self):
@@ -57,7 +59,7 @@ class Model(nn.Module):
         for k in range(100):
         #for i, data in enumerate(training_loader):
 
-            if self.is_learned_cost: #self.criterion = sinkhorn_loss
+            if self.learnable_cost: #self.criterion = sinkhorn_loss
                 f_x = self.learned_cost(x)
                 f_y = self.learned_cost(y)
 
