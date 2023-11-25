@@ -10,6 +10,8 @@ from torch.utils.data import DataLoader
 
 
 #PARAMETERS
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 batch_size = 64
 epochs = 20
 generator_dim = [[2,32], [32,128], [128, 784]] #last one should be [_,784]

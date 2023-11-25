@@ -66,10 +66,11 @@ class Model(nn.Module):
                 for t in range(n_c):
                     self.sinkhorn_loss_optimizer.zero_grad()
 
-                    x = self.forward_batch()
+                    x = self.forward_batch().to(device)
 
                     dataiter = iter(training_loader)
                     y, _ = next(dataiter)
+                    y = y.to(device)
 
                     opposite_loss =  -(2 * self.criterion(x,y) - self.criterion(x,x) - self.criterion(y,y))
                     
@@ -78,10 +79,11 @@ class Model(nn.Module):
 
                     self.criterion.parameters = torch.clip(self.criterion.parameters, min = - 10, max = 10) 
             
-            x = self.forward_batch()
+            x = self.forward_batch().to(device)
 
             dataiter = iter(training_loader)
             y, _ = next(dataiter)
+            y = y.to(device)
             
 
             self.optimizer.zero_grad()
