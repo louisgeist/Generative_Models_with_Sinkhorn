@@ -6,49 +6,53 @@ import torch.nn.modules.loss
 
 class sinkhorn_loss(torch.nn.modules.loss._Loss):
 
-	def __init__(self, fixed_cost : bool , f = None): # size_average = None, reduce = None, reduction : str = 'mean'
-		super().__init__(size_average = None, reduce = None, reduction = None)
+    def __init__(self, fixed_cost : bool , f = None): # size_average = None, reduce = None, reduction : str = 'mean'
+        super().__init__(size_average = None, reduce = None, reduction = None)
 
-		self.fixed_cost = fixed_cost
-		self.L = 10
+        self.fixed_cost = fixed_cost
+        self.L = 10
 
-		if not self.fixed_cost : 
-			self.f = f
-
-
-	def forward(self, input : torch.Tensor, target :  torch.Tensor, epsilon : float):
-		# inptu and target batch sizes are supposed the same
+        if not self.fixed_cost : 
+            self.f = f
 
 
-		if self.fixed_cost :
-			# X = input
-			# Y = target
+    def forward(self, input : torch.Tensor, target :  torch.Tensor, epsilon : float):
+        # input and target batch sizes are supposed the same
 
-			# X_expanded = X.unsqueeze(1)
-			# Y_expanded = Y.unsqueeze(0) 
 
-			# mse_tensor = F.mse_loss(X_expanded, Y_expanded, reduction='none')
+        batch_size = input.shape[0]
+        c = torch.zeros((batch_size,batch_size))
 
-			batch_size = input.shape[0]
-			c = torch.zeros((batch_size,batch_size))
+        
+            # X = input
+            # Y = target
 
-			for i in range(batch_size):
-				for j in range(batch_size):
-			 		c[i,j] = F.mse_loss(input[i], target[j], reduction = 'sum')
+            # X_expanded = X.unsqueeze(1)
+            # Y_expanded = Y.unsqueeze(0) 
 
-			
-			K = torch.exp(- c/epsilon)
+            # mse_tensor = F.mse_loss(X_expanded, Y_expanded, reduction='none')
 
-			one_vector = torch.ones(batch_size)
-			b = torch.ones(batch_size)
 
-			for l in range(self.L):
-				a = torch.mul(one_vector,1/(K @ b ))
-				b = torch.mul(one_vector,1/(K.T @ a))
+        for i in range(batch_size):
+            for j in range(batch_size):
 
-			return torch.sum((K * c)@ b *a)
+                if self.fixed_cost :
+                    c[i,j] = F.mse_loss(input[i], target[j], reduction = 'sum')
+                else :
+                    c[i,j] = F.mse_loss(self.f(input[i]), self.f(target[j]), reduction = 'sum')
 
-		else :
-			
+        
+        K = torch.exp(- c/epsilon)
+
+        one_vector = torch.ones(batch_size)
+        b = torch.ones(batch_size)
+
+        for l in range(self.L):
+            a = torch.mul(one_vector,1/(K @ b ))
+            b = torch.mul(one_vector,1/(K.T @ a))
+
+        return torch.sum((K * c)@ b *a)
+
+
 
 
