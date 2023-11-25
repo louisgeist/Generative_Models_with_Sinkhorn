@@ -18,6 +18,7 @@ class sinkhorn_loss(torch.nn.modules.loss._Loss):
             self.f = f
 
 
+
     def forward(self, input : torch.Tensor, target :  torch.Tensor):
         # input and target batch sizes are supposed the same
         if (input.shape != target.shape):
@@ -32,11 +33,11 @@ class sinkhorn_loss(torch.nn.modules.loss._Loss):
             for j in range(batch_size):
 
                 if not self.learnable_cost :
-                    c[i,j] = F.mse_loss(input[i], target[j], reduction = 'sum')
+                    c[i,j] = F.mse_loss(input[i], target[j], reduction = 'mean')
                 else :
-                    c[i,j] = F.mse_loss(self.f(input[i]), self.f(target[j]), reduction = 'sum')
+                    c[i,j] = F.mse_loss(self.f(input[i]), self.f(target[j]), reduction = 'mean')
 
-        print(c.shape)
+        #c = torch.clip(c/self.epsilon, min = 0, max = 100)
         K = torch.exp(- c/self.epsilon)
 
         one_vector = torch.ones(batch_size)

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from loss_sinkhorn import sinkhorn_loss
 
 #simple fully connected generator and learnable cost function
 class FC_net(nn.Module):
@@ -23,11 +24,9 @@ class FC_net(nn.Module):
             x = self.dropout(x)
         return x
     
-"""
-attention le param learnable_cost est mis à False par defaut
-"""
+
 class Model(nn.Module):
-    def __init__(self, generator_dim, learned_cost_dim, batch_size, criterion, lr, learnable_cost = False):
+    def __init__(self, generator_dim, learned_cost_dim, batch_size, lr, epsilon, learnable_cost = False):
         super(Model, self).__init__()
         self.generator = FC_net(generator_dim)
         self.learnable_cost = learnable_cost
@@ -35,7 +34,7 @@ class Model(nn.Module):
             self.learned_cost = FC_net(learned_cost_dim)
         self.sample_dim = generator_dim[0][0]
         self.batch_size = batch_size
-        self.criterion = criterion
+        self.criterion = sinkhorn_loss(learnable_cost, epsilon)
 
         self.optimizer = optim.Adam(self.parameters(), lr)
 
@@ -87,7 +86,7 @@ class Model(nn.Module):
 
             self.optimizer.zero_grad()
             loss = 2 * self.criterion(x,y) - self.criterion(x,x) - self.criterion(y,y)
-            running_loss +=loss.item()
+            running_loss += loss.item()
             loss.backward()
             self.optimizer.step()
 
