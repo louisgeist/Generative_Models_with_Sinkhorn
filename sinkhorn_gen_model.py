@@ -42,21 +42,22 @@ class Model(nn.Module):
 
 
     def forward(self):
-        z = torch.randn(self.batch_size, self.sample_dim) # N(0, I_d)
+        z = torch.randn(self.sample_dim) # N(0, I_d)
+        x = self.generator(z)
+        return x
+
+    def forward_batch(self):
+        z = torch.randn(self.batch_size, self.sample_dim)
         x = self.generator(z)
         return x
     
     def train_1epoch(self, training_loader):
         running_loss = 0
-        for i, data in enumerate(training_loader):
-            y, _ = data #we don't care about label
 
-            self.optimizer.zero_grad()
+        for k in range(100):
+        #for i, data in enumerate(training_loader):
 
-            #sample z and generate x
-            x = self()
-
-            if self.is_learned_cost: #self.critetion = sinkhorn_loss
+            if self.is_learned_cost: #self.criterion = sinkhorn_loss
                 f_x = self.learned_cost(x)
                 f_y = self.learned_cost(y)
 
@@ -64,19 +65,23 @@ class Model(nn.Module):
                 for t in range(n_c):
                     self.sinkhorn_loss_optimizer.zero_grad()
 
-                    x = # sampling on z to be done
-                    y = # sample des observaitons
+                    x = self.forward_batch()
+
+                    dataiter = iter(training_loader)
+                    y, _ = next(dataiter)
 
                     opposite_loss =  -(2 * self.criterion(x,y) - self.criterion(x,x) - self.criterion(y,y))
                     
                     opposite_loss.backward()
                     self.sinkhorn_loss_optimizer.step()
 
-                    #self.criterion.parameters = torch.clip(self.criterion.parameters, min =, max =) 
+                    self.criterion.parameters = torch.clip(self.criterion.parameters, min = - 10, max = 10) 
+            
+            x = self.forward_batch()
 
-
-            x = # sample
-            y = # sample
+            dataiter = iter(training_loader)
+            y, _ = next(dataiter)
+            
 
             self.optimizer.zero_grad()
             loss = 2 * self.criterion(x,y) - self.criterion(x,x) - self.criterion(y,y)
@@ -84,7 +89,10 @@ class Model(nn.Module):
             loss.backward()
             self.optimizer.step()
 
-            return running_loss
+            if k==99: 
+                print("End of the epoch due to the end of the for loop on k.")
+
+        return running_loss
 
 
 
