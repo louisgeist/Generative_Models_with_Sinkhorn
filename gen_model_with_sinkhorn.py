@@ -28,19 +28,22 @@ class FC_net(nn.Module):
 class Model(nn.Module):
     def __init__(self, generator_dim, learned_cost_dim, batch_size, lr, epsilon, learnable_cost = False):
         super(Model, self).__init__()
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
         self.generator = FC_net(generator_dim)
         self.learnable_cost = learnable_cost
         if self.learnable_cost:
             self.learned_cost = FC_net(learned_cost_dim)
         self.sample_dim = generator_dim[0][0]
         self.batch_size = batch_size
-        self.criterion = sinkhorn_loss(learnable_cost, epsilon)
+        self.criterion = sinkhorn_loss(learnable_cost, epsilon).to(self.device)
 
         self.optimizer = optim.Adam(self.parameters(), lr)
 
         if learnable_cost:
             self.sinkhorn_loss_optimizer = optim.Adam(self.criterion.parameters(), lr)
 
+        
 
     def forward(self):
         z = torch.randn(self.sample_dim) # N(0, I_d)
@@ -66,11 +69,11 @@ class Model(nn.Module):
                 for t in range(n_c):
                     self.sinkhorn_loss_optimizer.zero_grad()
 
-                    x = self.forward_batch().to(device)
+                    x = self.forward_batch().to(self.device)
 
                     dataiter = iter(training_loader)
                     y, _ = next(dataiter)
-                    y = y.to(device)
+                    y = y.to(self.device)
 
                     opposite_loss =  -(2 * self.criterion(x,y) - self.criterion(x,x) - self.criterion(y,y))
                     
@@ -79,11 +82,11 @@ class Model(nn.Module):
 
                     self.criterion.parameters = torch.clip(self.criterion.parameters, min = - 10, max = 10) 
             
-            x = self.forward_batch().to(device)
+            x = self.forward_batch().to(self.device)
 
             dataiter = iter(training_loader)
             y, _ = next(dataiter)
-            y = y.to(device)
+            y = y.to(self.device)
             
 
             self.optimizer.zero_grad()
