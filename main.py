@@ -10,8 +10,8 @@ from torch.utils.data import DataLoader
 
 
 #PARAMETERS
-batch_size = 32
-epochs = 2
+batch_size = 64
+epochs = 20
 generator_dim = [[2,32], [32,128], [128, 784]] #last one should be [_,784]
 learned_cost_dim = [[784, 128], [128, 128]] #first one should be [784, _]
 lr = 0.01
