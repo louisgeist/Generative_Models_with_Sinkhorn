@@ -36,7 +36,9 @@ class Model(nn.Module):
         self.sample_dim = generator_dim[0][0]
         self.batch_size = batch_size
         self.criterion = criterion
-        self.optimizer = optim.Adam(self.parameters(), lr)
+
+        self.optimizer = optim.RMSprop(self.parameters(), lr)
+        self.sinkhorn_loss_optimizer = optim.RMSprop(self.criterion.parameters(), lr)
 
 
     def forward(self):
@@ -54,21 +56,31 @@ class Model(nn.Module):
             #sample z and generate x
             x = self()
 
-            #if needed compute the learned cost
-            if self.is_learned_cost:
+            if self.is_learned_cost: #self.critetion = sinkhorn_loss
                 f_x = self.learned_cost(x)
                 f_y = self.learned_cost(y)
-            """
-            la normalement tu devrais avoir a faire qqch
-            """
 
-            # Calculate loss
-            """
-            ici j'ai pris une loss pas adapté pour tester si le model run
-            normalement tu dois remplacer cette partie 
-            """
-            loss = self.criterion(x, y)
-            running_loss += loss.item()
+                n_c = 10 
+                for t in range(n_c):
+                    self.sinkhorn_loss_optimizer.zero_grad()
+
+                    x = # sampling on z to be done
+                    y = # sample des observaitons
+
+                    opposite_loss =  -(2 * self.criterion(x,y) - self.criterion(x,x) - self.criterion(y,y))
+                    
+                    opposite_loss.backward()
+                    self.sinkhorn_loss_optimizer.step()
+
+                    #self.criterion.parameters = torch.clip(self.criterion.parameters, min =, max =) 
+
+
+            x = # sample
+            y = # sample
+
+            self.optimizer.zero_grad()
+            loss = 2 * self.criterion(x,y) - self.criterion(x,x) - self.criterion(y,y)
+            running_loss +=loss.item()
             loss.backward()
             self.optimizer.step()
 
