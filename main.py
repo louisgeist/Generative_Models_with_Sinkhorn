@@ -8,11 +8,15 @@ import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
+import time
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "mps:0" if torch.backends.mps.is_available() else "cpu")
+device = torch.device("cpu")
+print(device)
+
 
 #PARAMETERS
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-batch_size = 64
+batch_size = 32
 epochs = 20
 generator_dim = [[2,32], [32,128], [128, 784]] #last one should be [_,784]
 learned_cost_dim = [[784, 128], [128, 128]] #first one should be [784, _]
@@ -20,7 +24,7 @@ lr = 0.01
 learnable_cost = False
 epsilon = 0.1
 
-model = Model(generator_dim, learned_cost_dim, batch_size, lr, epsilon, learnable_cost)
+model = Model(generator_dim, learned_cost_dim, batch_size, lr, epsilon, learnable_cost, device)
 
 #to use normalized version of MNIST
 transform = transforms.Compose([
@@ -45,14 +49,12 @@ train_dataloader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuf
 test_dataloader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
 #training 
+start = time.time()
 for epoch in range(1,epochs+1):
     model.train(True)
     loss = model.train_1epoch(train_dataloader)
-    print(f"epoch{epoch}: loss = {loss}\n")
+    end = time.time()
+    print(f"Epoch {epoch} ({round(end-start,2)} s): loss = {loss}\n")
+    start = end
 
 torch.save(model, "basic_model.pt")
-
-"""
-j'ai pas fait de boucle de test car il faut choisir comment on evalue nos model
-il me reste a faire le GAN, je pense faire ca demain.
-"""
