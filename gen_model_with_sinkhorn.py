@@ -36,7 +36,7 @@ class Model(nn.Module):
             self.learned_cost = FC_net(learned_cost_dim).to(self.device)
         self.sample_dim = generator_dim[0][0]
         self.batch_size = batch_size
-        self.criterion = sinkhorn_loss(learnable_cost, epsilon, device = self.device).to(self.device)
+        self.criterion = sinkhorn_loss(learnable_cost, epsilon, device = self.device)
 
         self.optimizer = optim.Adam(self.parameters(), lr)
 
@@ -46,22 +46,21 @@ class Model(nn.Module):
         
 
     def forward(self):
-        z = torch.randn(self.sample_dim, device = self.device) # N(0, I_d)
+        z = torch.rand(self.sample_dim, device = self.device)
         x = self.generator(z)
         return x
 
     def forward_batch(self):
-        z = torch.randn(self.batch_size, self.sample_dim, device = self.device)
+        z = torch.rand(self.batch_size, self.sample_dim, device = self.device)
         x = self.generator(z)
         return x
     
     def train_1epoch(self, training_loader):
         running_loss = 0
 
-        for k in range(100):
-        #for i, data in enumerate(training_loader):
+        for k, data in enumerate(training_loader):
 
-            if self.learnable_cost: #self.criterion = sinkhorn_loss
+            if self.learnable_cost:
                 f_x = self.learned_cost(x)
                 f_y = self.learned_cost(y)
 
@@ -84,9 +83,11 @@ class Model(nn.Module):
             
             x = self.forward_batch()
 
-            dataiter = iter(training_loader)
-            y, _ = next(dataiter)
-            y = y.to(self.device)
+            #dataiter = iter(training_loader)
+            #y, _ = next(dataiter)
+            #y = y.to(self.device)
+
+            y = data[0].to(self.device)
             
 
             self.optimizer.zero_grad()
@@ -94,9 +95,6 @@ class Model(nn.Module):
             running_loss += loss.item()
             loss.backward()
             self.optimizer.step()
-
-            if k==99: 
-                print("End of the epoch due to the end of the for loop on k.")
 
         return running_loss
 

@@ -16,13 +16,14 @@ print(device)
 
 
 #PARAMETERS
-batch_size = 32
+batch_size = 64
 epochs = 20
-generator_dim = [[2,32], [32,128], [128, 784]] #last one should be [_,784]
+#generator_dim = [[2,32], [32,256], [256, 784]] 
+generator_dim = [[2,500], [500, 784]] #last one should be [_,784]
 learned_cost_dim = [[784, 128], [128, 128]] #first one should be [784, _]
-lr = 0.01
+lr = 0.1
 learnable_cost = False
-epsilon = 0.1
+epsilon = 10
 
 model = Model(generator_dim, learned_cost_dim, batch_size, lr, epsilon, learnable_cost, device)
 
