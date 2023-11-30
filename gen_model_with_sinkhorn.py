@@ -4,6 +4,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 from loss_sinkhorn import sinkhorn_loss
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 #simple fully connected generator and learnable cost function
 class FC_net(nn.Module):
     def __init__(self, dimensions, dropout_prob=0.2):
@@ -54,7 +57,12 @@ class Model(nn.Module):
         z = torch.rand(self.batch_size, self.sample_dim, device = self.device)
         x = self.generator(z)
         return x
-    
+
+    def deterministic_foward(self,z):
+        x = self.generator(z)
+        return x
+
+
     def train_1epoch(self, training_loader):
         running_loss = 0
 
@@ -65,7 +73,7 @@ class Model(nn.Module):
                 f_y = self.learned_cost(y)
 
                 n_c = 10 
-                for t in range(n_c):
+                for t in range(n_c): #implémenter dans loss_sinkhorn.py directement un training, afin de que les batch n'interfèrent pas ?
                     self.sinkhorn_loss_optimizer.zero_grad()
 
                     x = self.forward_batch()
@@ -97,6 +105,37 @@ class Model(nn.Module):
             self.optimizer.step()
 
         return running_loss
+
+    def display_manifold(self):
+        """
+        Displays on Z the image of g_theta
+
+        Two assumptions for that :
+            - Z is of dimension 2
+            - the law zeta on Z is U([0,1])
+
+        """
+        sample_per_axis = 20
+
+        z_grid = torch.linspace(0,1,sample_per_axis)
+
+        fig, axes = plt.subplots(sample_per_axis, sample_per_axis, figsize = (10,10))
+
+        for i in range(sample_per_axis):
+            for j in range(sample_per_axis):
+
+                z = torch.tensor([z_grid[i],z_grid[j]])
+                sample = self.deterministic_foward(z)
+                sample = sample.view(28,28).detach().numpy()
+
+                axes[i, j].imshow(sample, cmap='gray_r')
+                axes[i, j].axis('off')
+
+
+        plt.subplots_adjust(wspace = 0, hspace = 0)
+
+        plt.show()
+
 
 
 
