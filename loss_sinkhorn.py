@@ -23,16 +23,17 @@ class sinkhorn_loss(torch.nn.modules.loss._Loss):
         input_batch_size = input.shape[0]
         target_batch_size = target.shape[0]
 
-        c = torch.zeros((input_batch_size,target_batch_size))
 
-        # To calculate the L2 norms of the 2 by 2 elements of the two batches
-        input = input.unsqueeze(1).expand(-1, target_batch_size, -1)
-        target = target.unsqueeze(0).expand(input_batch_size, -1, -1)
-
-        if self.learnable_cost:
+        if self.learnable_cost :
             return "Not implemented - loss_sinkhorn.py"
         else :
-            c = F.mse_loss(input, target, reduction = 'none').mean(dim = 2)
+            # use of |x-y|^2 = |x|^2 - 2<x,y> + |y|^2
+            dots = input @ target.T
+            input_norm = (input**2).sum(dim = 1)
+            target_norm = (target**2).sum(dim = 1)
+
+            c = input_norm.view(input_batch_size,-1) - 2*dots + target_norm.view(1,target_batch_size)
+            c = c / input.shape[1] # normalization by the size of the 
 
 
         #c = torch.clip(c/self.epsilon, min = 0, max = 100)
