@@ -11,18 +11,18 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 Model = torch.load('basic_model.pt')
 
 Model.eval()
 sample = Model()
 
-def visualize(sample : torch.Tensor):
+def visualize_random_sample(sample : torch.Tensor):
 	sample = sample.view(28, 28).detach().numpy()
-
 
 	plt.figure()
 	plt.imshow(sample, cmap = 'gray')
 	plt.show()
 
-visualize(sample)
+#visualize_random_sample(sample)
+
+Model.display_manifold()

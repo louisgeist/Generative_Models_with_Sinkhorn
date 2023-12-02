@@ -16,16 +16,18 @@ print(device)
 
 
 #PARAMETERS
-batch_size = 64
-epochs = 20
+batch_size = 200
+epochs = 2
 #generator_dim = [[2,32], [32,256], [256, 784]] 
 generator_dim = [[2,500], [500, 784]] #last one should be [_,784]
 learned_cost_dim = [[784, 128], [128, 128]] #first one should be [784, _]
-lr = 0.1
+lr = 0.01
 learnable_cost = False
-epsilon = 10
+epsilon = 1
 
 model = Model(generator_dim, learned_cost_dim, batch_size, lr, epsilon, learnable_cost, device)
+
+#model = torch.load('basic_model.pt') # in order to continue the training
 
 #to use normalized version of MNIST
 transform = transforms.Compose([
