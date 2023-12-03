@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from gen_model_with_sinkhorn import Model
+from sinkhorn_generative_model import Model
 
 import torch
 from torchvision import datasets, transforms
@@ -17,12 +17,12 @@ print(device)
 
 #PARAMETERS
 batch_size = 200
-epochs = 2
+epochs = 500
 #generator_dim = [[2,32], [32,256], [256, 784]] 
 generator_dim = [[2,500], [500, 784]] #last one should be [_,784]
 learned_cost_dim = [[784, 128], [128, 128]] #first one should be [784, _]
 lr = 0.01
-learnable_cost = False
+learnable_cost = True
 epsilon = 1
 
 model = Model(generator_dim, learned_cost_dim, batch_size, lr, epsilon, learnable_cost, device)
@@ -57,7 +57,7 @@ for epoch in range(1,epochs+1):
     model.train(True)
     loss = model.train_1epoch(train_dataloader)
     end = time.time()
-    print(f"Epoch {epoch} ({round(end-start,2)} s): loss = {loss}\n")
+    print(f"Epoch {epoch} ({round(end-start,2)} s): loss = {loss}")
     start = end
 
 torch.save(model, "basic_model.pt")
