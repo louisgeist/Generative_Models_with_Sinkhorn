@@ -41,7 +41,7 @@ class Model(nn.Module):
         self.batch_size = batch_size
         self.criterion = sinkhorn_loss(learnable_cost, epsilon, device = self.device)
 
-        self.optimizer = optim.Adam(self.parameters(), lr)
+        self.optimizer = optim.Adam(self.generator.parameters(), lr)
 
         if learnable_cost:
             self.sinkhorn_loss_optimizer = optim.Adam(self.criterion.parameters(), lr)
