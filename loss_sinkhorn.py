@@ -18,14 +18,28 @@ class sinkhorn_loss(torch.nn.modules.loss._Loss):
         if self.learnable_cost : 
             self.f = f
 
-    def forward(self, input : torch.Tensor, target :  torch.Tensor):
-
+    def forward(self, input : torch.Tensor, target :  torch.Tensor, learned_cost = None):
         input_batch_size = input.shape[0]
         target_batch_size = target.shape[0]
 
 
         if self.learnable_cost :
-            return "Not implemented - loss_sinkhorn.py"
+
+            if learned_cost == None :
+                raise ValueError("Boolean self.learnable_cost as True and neural network learned_cost as None are impossible.")
+
+            input = learned_cost(input)
+            target = learned_cost(target)
+
+            dots = input @ target.T
+            input_norm = (input**2).sum(dim = 1)
+            target_norm = (target**2).sum(dim = 1)
+
+            c = input_norm.view(input_batch_size,-1) - 2*dots + target_norm.view(1,target_batch_size)
+            #c = c / input.shape[1]  # normalization by the size of the
+            c = torch.clip(c,min = 1e-16)
+            c = c**(1/2)
+
         else :
 
             # use of |x-y|^2 = |x|^2 - 2<x,y> + |y|^2
