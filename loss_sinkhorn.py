@@ -27,13 +27,17 @@ class sinkhorn_loss(torch.nn.modules.loss._Loss):
         if self.learnable_cost :
             return "Not implemented - loss_sinkhorn.py"
         else :
+
             # use of |x-y|^2 = |x|^2 - 2<x,y> + |y|^2
             dots = input @ target.T
             input_norm = (input**2).sum(dim = 1)
             target_norm = (target**2).sum(dim = 1)
 
             c = input_norm.view(input_batch_size,-1) - 2*dots + target_norm.view(1,target_batch_size)
-            c = c / input.shape[1] # normalization by the size of the 
+            #c = c / input.shape[1]  # normalization by the size of the
+            c = torch.clip(c,min = 1e-16)
+            c = c**(1/2)
+
 
 
         #c = torch.clip(c/self.epsilon, min = 0, max = 100)
@@ -44,6 +48,7 @@ class sinkhorn_loss(torch.nn.modules.loss._Loss):
         for l in range(self.L):
             a = torch.ones(input_batch_size, device = self.device)/input_batch_size * 1/(K @ b )
             b = torch.ones(target_batch_size, device = self.device)/target_batch_size * 1/(K.T @ a)
+
 
         return torch.sum((K * c)@ b *a)
 
