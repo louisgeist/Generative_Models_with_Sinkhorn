@@ -7,6 +7,8 @@ from loss_sinkhorn import sinkhorn_loss
 import matplotlib.pyplot as plt
 import numpy as np
 
+import time
+
 #simple fully connected generator and learnable cost function
 class FC_net(nn.Module):
     def __init__(self, dimensions, dropout_prob=0.2):
@@ -33,20 +35,17 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.device = device
 
-        self.generator = FC_net(generator_dim).to(self.device)
-        self.learnable_cost = learnable_cost
-        if self.learnable_cost:
-            self.learned_cost = FC_net(learned_cost_dim).to(self.device)
-        self.sample_dim = generator_dim[0][0]
         self.batch_size = batch_size
         self.criterion = sinkhorn_loss(learnable_cost, epsilon, device = self.device)
 
+        self.generator = FC_net(generator_dim).to(self.device)
         self.optimizer = optim.Adam(self.generator.parameters(), lr)
+        self.sample_dim = generator_dim[0][0]
 
-        if learnable_cost:
-            self.sinkhorn_loss_optimizer = optim.Adam(self.criterion.parameters(), lr)
-
-        
+        self.learnable_cost = learnable_cost # Boolean           
+        if self.learnable_cost:
+            self.learned_cost = FC_net(learned_cost_dim).to(self.device)
+            self.cost_optimizer = optim.Adam(self.learned_cost.parameters(), lr, maximize = True)
 
     def forward(self):
         z = torch.rand(self.sample_dim, device = self.device)
@@ -64,38 +63,29 @@ class Model(nn.Module):
 
 
     def train_1epoch(self, training_loader):
+        """
+        One epoch training of the generative model.
+        If we learn the cost function (self.learnable_cost = True), then 
+        each epoch of the generative model is first composed of n_c (fixed in self. train_1epoch_cost) 
+        training steps of the cost.
+
+        """
         running_loss = 0
 
         for k, data in enumerate(training_loader):
+            start = time.time()
+            if self.learnable_cost:
+                opposite_loss = self.train_1epoch_cost(training_loader)
+                end = time.time()
+                print(f"Iteration {k} ({round(end-start,2)} s): opposite loss = {opposite_loss}")
+                start = end
+                                
+            x = self.forward_batch()
+            y = data[0].to(self.device)
 
             if self.learnable_cost:
-                f_x = self.learned_cost(x)
-                f_y = self.learned_cost(y)
-
-                n_c = 10 
-                for t in range(n_c): #implémenter dans loss_sinkhorn.py directement un training, afin de que les batch n'interfèrent pas ?
-                    self.sinkhorn_loss_optimizer.zero_grad()
-
-                    x = self.forward_batch()
-
-                    dataiter = iter(training_loader)
-                    y, _ = next(dataiter)
-                    y = y.to(self.device)
-
-                    opposite_loss =  -(2 * self.criterion(x,y) - self.criterion(x,x) - self.criterion(y,y))
-                    
-                    opposite_loss.backward()
-                    self.sinkhorn_loss_optimizer.step()
-
-                    self.criterion.parameters = torch.clip(self.criterion.parameters, min = - 10, max = 10) 
-            
-            x = self.forward_batch()
-
-            #dataiter = iter(training_loader)
-            #y, _ = next(dataiter)
-            #y = y.to(self.device)
-
-            y = data[0].to(self.device)
+                x = self.learned_cost(x)
+                y = self.learned_cost(y)
             
 
             self.optimizer.zero_grad()
@@ -105,6 +95,32 @@ class Model(nn.Module):
             self.optimizer.step()
 
         return running_loss
+
+    def train_1epoch_cost(self,training_loader):
+        n_c = 1
+        #batch_ind = torch.randperm(len(training_loader))[:n_c].detach().numpy()
+
+        for k, data in enumerate(training_loader):
+            if k >=n_c:
+                break
+            #if k not in batch_ind :
+            #    continue
+
+            self.cost_optimizer.zero_grad()
+
+            x = self.forward_batch()
+            y = data[0].to(self.device)
+
+            loss =  2 * self.criterion(x,y) - self.criterion(x,x) - self.criterion(y,y)
+                    
+            loss.backward()
+            self.cost_optimizer.step()
+
+            for param in self.learned_cost.parameters():
+                param.data = torch.clip(param.data, min=-30, max=30)
+
+        return loss
+
 
     def display_manifold(self):
         """
@@ -141,8 +157,6 @@ class Model(nn.Module):
 
 
         
-
-
 
 
 
