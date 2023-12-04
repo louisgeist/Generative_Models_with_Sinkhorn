@@ -10,51 +10,22 @@ class sinkhorn_loss(torch.nn.modules.loss._Loss):
         super().__init__(size_average = None, reduce = None, reduction = None)
 
         self.device = device
-        self.learnable_cost = learnable_cost
         self.epsilon = epsilon
         self.L = 10
 
-
-        if self.learnable_cost : 
-            self.f = f
-
-    def forward(self, input : torch.Tensor, target :  torch.Tensor, learned_cost = None):
+    def forward(self, input : torch.Tensor, target :  torch.Tensor):
         input_batch_size = input.shape[0]
         target_batch_size = target.shape[0]
 
+        # use of |x-y|^2 = |x|^2 - 2<x,y> + |y|^2
+        dots = input @ target.T
+        input_norm = (input**2).sum(dim = 1)
+        target_norm = (target**2).sum(dim = 1)
 
-        if self.learnable_cost :
+        c = input_norm.view(input_batch_size,-1) - 2*dots + target_norm.view(1,target_batch_size)
+        c = torch.clip(c,min = 1e-16)
+        c = c**(1/2)
 
-            if learned_cost == None :
-                raise ValueError("Boolean self.learnable_cost as True and neural network learned_cost as None are impossible.")
-
-            input = learned_cost(input)
-            target = learned_cost(target)
-
-            dots = input @ target.T
-            input_norm = (input**2).sum(dim = 1)
-            target_norm = (target**2).sum(dim = 1)
-
-            c = input_norm.view(input_batch_size,-1) - 2*dots + target_norm.view(1,target_batch_size)
-            #c = c / input.shape[1]  # normalization by the size of the
-            c = torch.clip(c,min = 1e-16)
-            c = c**(1/2)
-
-        else :
-
-            # use of |x-y|^2 = |x|^2 - 2<x,y> + |y|^2
-            dots = input @ target.T
-            input_norm = (input**2).sum(dim = 1)
-            target_norm = (target**2).sum(dim = 1)
-
-            c = input_norm.view(input_batch_size,-1) - 2*dots + target_norm.view(1,target_batch_size)
-            #c = c / input.shape[1]  # normalization by the size of the
-            c = torch.clip(c,min = 1e-16)
-            c = c**(1/2)
-
-
-
-        #c = torch.clip(c/self.epsilon, min = 0, max = 100)
         K = torch.exp(- c/self.epsilon)
 
         b = torch.ones(target_batch_size, device = self.device)/target_batch_size
