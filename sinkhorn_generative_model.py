@@ -58,7 +58,7 @@ class Model(nn.Module):
         return x
 
     def deterministic_foward(self,z):
-        x = self.generator(z)
+        x = self.generator(z).to(self.device)
         return x
 
 
@@ -77,7 +77,7 @@ class Model(nn.Module):
             if self.learnable_cost:
                 opposite_loss = self.train_1epoch_cost(training_loader)
                 end = time.time()
-                print(f"Iteration {k} ({round(end-start,2)} s): opposite loss = {opposite_loss}")
+                #print(f"Iteration {k} ({round(end-start,2)} s): opposite loss = {opposite_loss}")
                 start = end
                                 
             x = self.forward_batch()
@@ -97,27 +97,27 @@ class Model(nn.Module):
         return running_loss
 
     def train_1epoch_cost(self,training_loader):
-        n_c = 1
-        #batch_ind = torch.randperm(len(training_loader))[:n_c].detach().numpy()
+        n_c = 20
 
         for k, data in enumerate(training_loader):
             if k >=n_c:
                 break
-            #if k not in batch_ind :
-            #    continue
 
             self.cost_optimizer.zero_grad()
 
             x = self.forward_batch()
             y = data[0].to(self.device)
 
+            x = self.learned_cost(x)
+            y = self.learned_cost(y)
+
             loss =  2 * self.criterion(x,y) - self.criterion(x,x) - self.criterion(y,y)
-                    
             loss.backward()
+            print(loss.item())
             self.cost_optimizer.step()
 
             for param in self.learned_cost.parameters():
-                param.data = torch.clip(param.data, min=-30, max=30)
+                param.data = torch.clip(param.data, min=-10, max=10)
 
         return loss
 
@@ -140,9 +140,9 @@ class Model(nn.Module):
         for i in range(sample_per_axis):
             for j in range(sample_per_axis):
 
-                z = torch.tensor([z_grid[i],z_grid[j]])
-                sample = self.deterministic_foward(z)
-                sample = sample.view(28,28).detach().numpy()
+                z = torch.tensor([z_grid[i],z_grid[j]], device = self.device)
+                sample = self.deterministic_foward(z).to(self.device)
+                sample = sample.view(28,28).cpu().detach().numpy()
 
                 axes[i, j].imshow(sample, cmap='gray_r')
                 axes[i, j].axis('off')
