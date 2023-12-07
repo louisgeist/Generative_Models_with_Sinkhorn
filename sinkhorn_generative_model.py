@@ -9,6 +9,8 @@ import numpy as np
 
 import time
 
+import matplotlib.pyplot as plt
+
 #simple fully connected generator and learnable cost function
 class FC_net(nn.Module):
     def __init__(self, dimensions, dropout_prob=0.2):
@@ -47,6 +49,10 @@ class Model(nn.Module):
             self.learned_cost = FC_net(learned_cost_dim).to(self.device)
             self.cost_optimizer = optim.Adam(self.learned_cost.parameters(), lr, maximize = True)
 
+        self.training_logs = []
+
+
+
     def forward(self):
         z = torch.rand(self.sample_dim, device = self.device)
         x = self.generator(z)
@@ -61,6 +67,9 @@ class Model(nn.Module):
         x = self.generator(z).to(self.device)
         return x
 
+
+
+    ### --- Training methods ---
 
     def train_1epoch(self, training_loader):
         """
@@ -122,6 +131,18 @@ class Model(nn.Module):
         return loss
 
 
+    ### --- display results ---
+    def set_training_logs(self, training_logs):
+        self.training_logs = training_logs
+
+    def get_training_logs(self):
+        return self.training_logs
+
+    def plot_training_loss(self):
+        plt.figure()
+        plot = plt.plot(self.get_training_logs()[:,0],self.get_training_logs()[:,1])
+        plt.show()
+
     def display_manifold(self):
         """
         Displays on Z the image of g_theta
@@ -142,7 +163,7 @@ class Model(nn.Module):
 
                 z = torch.tensor([z_grid[i],z_grid[j]], device = self.device)
                 sample = self.deterministic_foward(z).to(self.device)
-                sample = sample.view(28,28).cpu().detach().numpy()
+                sample = sample.view(28,28).detach().numpy()
 
                 axes[i, j].imshow(sample, cmap='gray_r')
                 axes[i, j].axis('off')
