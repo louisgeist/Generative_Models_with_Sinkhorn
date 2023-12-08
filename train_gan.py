@@ -12,25 +12,53 @@ from torch.utils.data import DataLoader
 
 
 #### PARAMETERS #####
-batch_size = 64
-lr = 0.0002
-num_epochs = 10
-model_name  = "GAN_MNIST_10_epochs" #to save the model weights
-generator_dim = [[2, 256], [256, 512], [512, 1024], [1024, 784]] # first one should be [sample_dim, _] last one should be [_, 784]
-discriminator_dim = [[784, 1024], [1024, 512], [512, 256], [256, 1]] #first one should be [784, _] last one should be [_, 1]
+batch_size = 200
+lr = 0.001
+num_epochs = 40
+model_name  = "GAN_MNIST_40_epochs" #to save the model weights
+
+data_name = "CIFAR10" #to adpat
+if data_name == "CIFAR10":
+    output_dim = 3072
+if data_name == "MNIST":
+    output_dim = 784
+if data_name == "FashionMNIST":
+    output_dim = 784
+else :
+    print("not the correct dataset name")
+
+generator_dim = [[2, 256], [256, 512], [512, 1024], [1024, output_dim]] # first one should be [sample_dim, _] last one should be [_, 784]
+discriminator_dim = [[output_dim, 1024], [1024, 512], [512, 256], [256, 1]] #first one should be [784, _] last one should be [_, 1]
 sample_dim = generator_dim[0][0]
 
 
-#####Load MNIST#####
-trans = transforms.Compose([
+#####Load data#####
+trans2D = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5,),(0.5,)),
     ])
 
-train_dataset = datasets.MNIST(root='./data', train=True, transform=trans, download=True)
+trans3D = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5)) 
+])
+
 flatten = transforms.Lambda(lambda x: x.view(-1))
-train_dataset.transform = transforms.Compose([trans, flatten])
-dataloader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+
+if data_name == "MNIST":
+    train_dataset = datasets.MNIST(root='./data', train=True, transform=trans2D, download=True)
+    train_dataset.transform = transforms.Compose([trans2D, flatten])
+    dataloader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+if data_name == "FashionMNIST":
+    train_dataset = datasets.MNIST(root='./data', train=True, transform=trans2D, download=True)
+    train_dataset.transform = transforms.Compose([trans2D, flatten])
+    dataloader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+if data_name == "CIFAR10":
+    train_dataset = datasets.CIFAR10(root='./data', train=True, transform=trans3D, download=True)
+    train_dataset.transform = transforms.Compose([trans3D, flatten])
+    dataloader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+
+
 
 
 ############# Create discriminator and generator #############
@@ -92,4 +120,4 @@ for epoch in range(1, num_epochs+1):
     discriminator_loss_history.append(discriminator_batch_loss / (batch_idx + 1))
     generator_loss_history.append(generator_batch_loss / (batch_idx + 1))
 
-torch.save(generator, f"./trained_model/{model_name}.pt")
+torch.save(generator, f"/trained_model/{model_name}.pt")
