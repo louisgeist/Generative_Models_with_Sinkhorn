@@ -2,26 +2,33 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from sinkhorn_gen_model import Model
-
-
+from sinkhorn_generative_model import Model
 
 import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
+import time
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "mps:0" if torch.backends.mps.is_available() else "cpu")
+device = torch.device("cpu")
+print(device)
+
 
 #PARAMETERS
-batch_size = 64
-epochs = 5
-generator_dim = [[2,32], [32,128], [128, 784]] #last one should be [_,784]
+model_name  = "GAN_MNIST_10_epochs"
+batch_size = 200
+epochs = 40
+#generator_dim = [[2,32], [32,256], [256, 784]] 
+generator_dim = [[2, 256], [256, 512], [512, 1024], [1024, 784]] #last one should be [_,784]
 learned_cost_dim = [[784, 128], [128, 128]] #first one should be [784, _]
-criterion = nn.CrossEntropyLoss()
-lr = 0.001
-"""
-ducoup la tu dois supprimer criterion je pense (dans Model() aussi)
-"""
-model = Model(generator_dim, learned_cost_dim, batch_size, criterion, lr)
+lr = 0.01
+learnable_cost = False
+epsilon = 1
+
+model = Model(generator_dim, learned_cost_dim, batch_size, lr, epsilon, learnable_cost, device)
+
+#model = torch.load('basic_model.pt') # in order to continue the training
 
 #to use normalized version of MNIST
 transform = transforms.Compose([
@@ -46,16 +53,12 @@ train_dataloader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuf
 test_dataloader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
 #training 
-for epoch in range(epochs):
+start = time.time()
+for epoch in range(1,epochs+1):
     model.train(True)
     loss = model.train_1epoch(train_dataloader)
-    print(f"epoch{epoch}: loss = {loss}\n")
+    end = time.time()
+    print(f"Epoch {epoch} ({round(end-start,2)} s): loss = {loss}")
+    start = end
 
-"""
-c'est normal si la loss ne decroit pas car utilisé la crossentropy a aucun sens
-mais au moin on sait que le model fonctionne!
-
-j'ai pas fait de boucle de test car il faut choisir comment on evalue nos model
-il me reste a faire le GAN, je pense faire ca demain.
-"""
-
+torch.save(model, f"./trained_models/{model_name}.pt")

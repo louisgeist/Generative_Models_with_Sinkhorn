@@ -15,21 +15,26 @@ import matplotlib.pyplot as plt
 class FC_net(nn.Module):
     def __init__(self, dimensions, dropout_prob=0.2):
         super(FC_net, self).__init__()
-        self.fc_layers = nn.ModuleList([
-            nn.Linear(dim_in, dim_out) 
-            for dim_in, dim_out in dimensions
-        ])
-        self.dropout = nn.Dropout(p=dropout_prob)
+        self.fc_layers = nn.ModuleList()
+        for i, (dim_in, dim_out) in enumerate(dimensions):
+            if i < len(dimensions) - 1:
+                layer = nn.Sequential(
+                    nn.Linear(dim_in, dim_out),
+                    nn.BatchNorm1d(dim_out),
+                    nn.ReLU(inplace=True),
+                    nn.Dropout(p=dropout_prob)
+                )
+            else: # no batch norm on last layer
+                layer = nn.Sequential(
+                    nn.Linear(dim_in, dim_out),
+                    nn.Tanh()  
+                )
+            self.fc_layers.append(layer)
 
     def forward(self, x):
-        for i, layer in enumerate(self.fc_layers):
-            x = layer(x)
-            # Apply ReLU activation except for the last layer
-            if i < len(self.fc_layers) - 1:
-                x = F.relu(x)    
-            # Apply dropout between layers
-            x = self.dropout(x)
-        return x
+      for layer in self.fc_layers:
+          x = layer(x)
+      return x
     
 
 class Model(nn.Module):
@@ -122,7 +127,7 @@ class Model(nn.Module):
 
             loss =  2 * self.criterion(x,y) - self.criterion(x,x) - self.criterion(y,y)
             loss.backward()
-            print(loss.item())
+            #print(loss.item())
             self.cost_optimizer.step()
 
             for param in self.learned_cost.parameters():
