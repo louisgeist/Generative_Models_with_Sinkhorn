@@ -8,6 +8,8 @@ import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
+import numpy as np
+
 import time
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "mps:0" if torch.backends.mps.is_available() else "cpu")
@@ -53,11 +55,18 @@ test_dataloader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffl
 
 #training 
 start = time.time()
+
+training_logs = np.zeros((epochs,3))
 for epoch in range(1,epochs+1):
     model.train(True)
     loss = model.train_1epoch(train_dataloader)
     end = time.time()
-    print(f"Epoch {epoch} ({round(end-start,2)} s): loss = {loss}")
+    epoch_duration = round(end-start,2)
+    print(f"Epoch {epoch} ({epoch_duration} s): loss = {loss}")
     start = end
 
-torch.save(model, "basic_model.pt")
+    training_logs[epoch-1,:] = np.array([epoch,loss,epoch_duration])
+
+model.set_training_logs(training_logs)
+
+torch.save(model, "trained_models/basic_model.pt")
