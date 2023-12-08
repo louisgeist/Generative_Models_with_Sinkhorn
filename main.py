@@ -18,13 +18,14 @@ print(device)
 
 
 #PARAMETERS
+model_name  = "GAN_MNIST_10_epochs"
 batch_size = 200
-epochs = 500
+epochs = 40
 #generator_dim = [[2,32], [32,256], [256, 784]] 
-generator_dim = [[2,500], [500, 784]] #last one should be [_,784]
+generator_dim = [[2, 256], [256, 512], [512, 1024], [1024, 784]] #last one should be [_,784]
 learned_cost_dim = [[784, 128], [128, 128]] #first one should be [784, _]
 lr = 0.01
-learnable_cost = True
+learnable_cost = False
 epsilon = 1
 
 model = Model(generator_dim, learned_cost_dim, batch_size, lr, epsilon, learnable_cost, device)
