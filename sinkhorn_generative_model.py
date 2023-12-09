@@ -165,10 +165,12 @@ class Model(nn.Module):
 
         fig, axes = plt.subplots(sample_per_axis, sample_per_axis, figsize = (10,10))
 
+        z_list = [0.9 for _ in range(self.sample_dim)]
         for i in range(sample_per_axis):
             for j in range(sample_per_axis):
 
-                z = torch.tensor([z_grid[i],z_grid[j]], device = self.device)
+                z_list[0],z_list[1] = z_grid[i],z_grid[j]
+                z = torch.tensor(z_list, device = self.device)
                 sample = self.deterministic_foward(z).to(self.device)
 
                 if self.data_name == 'MNIST' or self.data_name == 'FashionMNIST':
