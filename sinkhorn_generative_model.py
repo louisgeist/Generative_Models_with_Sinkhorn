@@ -150,6 +150,26 @@ class Model(nn.Module):
         plot = plt.plot(self.get_training_logs()[:,0],self.get_training_logs()[:,1])
         plt.show()
 
+    def visualize_random_sample(self):
+        sample = self.forward()
+
+        if self.data_name == "MNIST" or self.data_name == "FashionMNIST" :
+            sample = sample.view(28, 28).detach().numpy()
+
+            plt.figure()
+            plt.imshow(sample, cmap = 'gray_r')
+            plt.show()
+
+        elif self.data_name == "CIFAR10" :
+            sample = sample.view(-1, 32,32).detach().numpy()
+            sample = sample/2+0.5
+            sample = np.transpose(sample, (1,2,0))
+
+            plt.figure()
+            plt.imshow(sample)
+            plt.show()
+
+
     def display_manifold(self):
         """
         Displays on Z the image of g_theta
