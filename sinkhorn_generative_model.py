@@ -38,9 +38,10 @@ class FC_net(nn.Module):
     
 
 class Model(nn.Module):
-    def __init__(self, generator_dim, learned_cost_dim, batch_size, lr, epsilon, learnable_cost = False, device = "cpu"):
+    def __init__(self, generator_dim, learned_cost_dim, batch_size, lr, epsilon, learnable_cost = False, device = "cpu", data_name = None):
         super(Model, self).__init__()
         self.device = device
+        self.data_name = data_name
 
         self.batch_size = batch_size
         self.criterion = sinkhorn_loss(learnable_cost, epsilon, device = self.device)
@@ -60,7 +61,6 @@ class Model(nn.Module):
 
     def forward(self):
         z = torch.rand((1,self.sample_dim), device = self.device)
-        print("z shape : ",z.shape)
         x = self.generator(z)
         return x
 
@@ -170,10 +170,21 @@ class Model(nn.Module):
 
                 z = torch.tensor([z_grid[i],z_grid[j]], device = self.device)
                 sample = self.deterministic_foward(z).to(self.device)
-                sample = sample.view(28,28).detach().numpy()
 
-                axes[i, j].imshow(sample, cmap='gray_r')
-                axes[i, j].axis('off')
+                if self.data_name == 'MNIST' or self.data_name == 'FashionMNIST':
+                    sample = sample.view(28,28).detach().numpy()
+
+                    axes[i, j].imshow(sample, cmap='gray_r')
+                    axes[i, j].axis('off')
+
+
+                else :
+                    sample = sample.view(-1, 32,32).detach().numpy()
+                    sample = sample/2+0.5
+                    sample = np.transpose(sample, (1,2,0))
+
+                    axes[i, j].imshow(sample)
+                    axes[i, j].axis('off')
 
 
         plt.subplots_adjust(wspace = 0, hspace = 0)
