@@ -89,18 +89,9 @@ def train_sinkhorn(data_name = "MNIST",
 
 # function call
 
-train_sinkhorn(data_name = "MNIST",
-    batch_size = 200,
-    epochs = 20,
-    lr = 0.001,
-    learnable_cost = False,
-    epsilon = 1,
-    device = device)
-
-
 epochs = 40
 lr = 0.001
-list_epsilon = [0.1, 1, 10]
+list_epsilon = [1, 10,100]
 
 data_names = ['MNIST', 'FashionMNIST'] #, 'CIFAR10'
 
@@ -108,10 +99,10 @@ for data_name in data_names :
     for epsilon in list_epsilon :
         print(f"Training Sinkhorn model on {data_name} with epsilon = {epsilon}.")
         train_sinkhorn(data_name = data_name,
-        batch_size = 200,
-        epochs = epochs,
-        lr = 0.001,
-        learnable_cost = False,
-        epsilon = epsilon,
-        device = device)
+            batch_size = 200,
+            epochs = epochs,
+            lr = 0.001,
+            learnable_cost = False,
+            epsilon = epsilon,
+            device = device)
 

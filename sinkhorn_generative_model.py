@@ -44,6 +44,7 @@ class Model(nn.Module):
         self.data_name = data_name
 
         self.batch_size = batch_size
+        self.epsilon = epsilon
         self.criterion = sinkhorn_loss(learnable_cost, epsilon, device = self.device)
 
         self.generator = FC_net(generator_dim).to(self.device)
@@ -210,6 +211,7 @@ class Model(nn.Module):
 
 
         plt.subplots_adjust(wspace = 0, hspace = 0)
+        plt.title(f'Sinkhorn generative model on {self.data_name} with epsilon = {self.epsilon}.')
 
         plt.show()
 
