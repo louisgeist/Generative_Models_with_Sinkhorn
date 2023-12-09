@@ -59,7 +59,8 @@ class Model(nn.Module):
 
 
     def forward(self):
-        z = torch.rand(self.sample_dim, device = self.device)
+        z = torch.rand((1,self.sample_dim), device = self.device)
+        print("z shape : ",z.shape)
         x = self.generator(z)
         return x
 
@@ -69,6 +70,7 @@ class Model(nn.Module):
         return x
 
     def deterministic_foward(self,z):
+        z = z.unsqueeze(0)
         x = self.generator(z).to(self.device)
         return x
 
