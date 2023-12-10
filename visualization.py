@@ -13,7 +13,7 @@ import numpy as np
 
 
 ##### to fill ####
-model_name = "AGAN_MNIST_40epochs"
+model_name = "sinkhorn_eps1_40epoch_"
 data_name = "MNIST"
 ###################
 Model = torch.load(f'./trained_models/{data_name}/{model_name}.pt').to(device = "cpu")
@@ -32,11 +32,11 @@ else: #visualization functions of GANs and Sinkhorn based models are slightly di
     Model.plot_training_loss()
     Model.display_manifold()
 
-data_name = 'MNIST'
-list_epsilon = [1, 10, 100]
+# data_name = 'MNIST'
+# list_epsilon = [1, 10, 100]
 
-for epsilon in list_epsilon :
-	Model = torch.load(f'trained_models/{data_name}/sinkhorn_eps{epsilon}_40epoch_.pt').to(device = "cpu")
-	Model.eval()
-	Model.display_manifold()
+# for epsilon in list_epsilon :
+# 	Model = torch.load(f'trained_models/{data_name}/sinkhorn_eps{epsilon}_40epoch_.pt').to(device = "cpu")
+# 	Model.eval()
+# 	Model.display_manifold()
 

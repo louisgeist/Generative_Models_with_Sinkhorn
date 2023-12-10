@@ -149,6 +149,9 @@ class Model(nn.Module):
     def plot_training_loss(self):
         plt.figure()
         plot = plt.plot(self.get_training_logs()[:,0],self.get_training_logs()[:,1])
+        plt.suptitle(f'Training loss of sinkhorn generative model on {self.data_name} with epsilon = {self.epsilon}.')
+        plt.ylabel("Sinkhorn loss")
+        plt.xlabel("Epochs")
         plt.show()
 
     def visualize_random_sample(self):
@@ -211,15 +214,6 @@ class Model(nn.Module):
 
 
         plt.subplots_adjust(wspace = 0, hspace = 0)
-        plt.title(f'Sinkhorn generative model on {self.data_name} with epsilon = {self.epsilon}.')
 
+        plt.suptitle(f'Sinkhorn generative model on {self.data_name} with epsilon = {self.epsilon}.', y=0.92)
         plt.show()
-
-
-
-
-
-        
-
-
-
