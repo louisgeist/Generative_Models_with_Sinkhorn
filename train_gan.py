@@ -77,6 +77,11 @@ discriminator_loss_history = []
 generator_loss_history = []
 
 for epoch in range(1, num_epochs+1):
+    """
+    a part of this code was adapted from
+    Author: Kanghui Liu
+    Blog in depth tutorial: https://www.bigrabbitdata.com/
+    """
     discriminator_batch_loss = 0.0
     generator_batch_loss = 0.0
     for batch_idx, (data, targets) in enumerate(dataloader):
